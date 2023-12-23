@@ -3,9 +3,9 @@ package usecase
 import (
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
+	"github.com/athunlal/Note-Taking-Application/pkg/config"
 	"github.com/athunlal/Note-Taking-Application/pkg/domain"
 	"github.com/athunlal/Note-Taking-Application/pkg/usecase/interfaces"
 	"github.com/golang-jwt/jwt"
@@ -75,15 +75,15 @@ func (u *jwtUseCase) GetTokenFromString(signedToken string, claims *domain.JwtCl
 }
 
 func (use *userUseCase) ValidateJwtUser(userId uint) (*domain.User, error) {
-	user, err := use.Repo.FindUserById(int(userId))
+	user, err := use.repo.FindUserById(int(userId))
 	if err != nil {
 		return user, errors.New("Unauthorized User")
 	}
 	return user, nil
 }
 
-func NewJWTUseCase() interfaces.JwtUseCase {
+func NewJWTUseCase(cfg config.Config) interfaces.JwtUseCase {
 	return &jwtUseCase{
-		SecretKey: os.Getenv("SECRET_KEY"),
+		SecretKey: cfg.SECRET_KEY,
 	}
 }

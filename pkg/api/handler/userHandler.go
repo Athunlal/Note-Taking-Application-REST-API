@@ -11,49 +11,41 @@ import (
 )
 
 type UserHandler struct {
-	UseCase    interfaces.UserUseCase
+	usecase    interfaces.UserUseCase
 	jwtUseCase interfaces.JwtUseCase
 }
 
-func NewUserHandler(useCase interfaces.UserUseCase) *UserHandler {
+func NewUserHandler(useCase interfaces.UserUseCase, jwtUseCase interfaces.JwtUseCase) *UserHandler {
 	return &UserHandler{
-		UseCase: useCase,
+		usecase:    useCase,
+		jwtUseCase: jwtUseCase,
 	}
 }
 
 func (h *UserHandler) Register(ctx *gin.Context) {
-	body := domain.User{}
-	err := ctx.BindJSON(&body)
-	if err != nil {
+	var user domain.User
+	if err := ctx.ShouldBindJSON(&user); err != nil {
 		utils.JsonInputValidation(ctx)
 		return
 	}
 
-	err = h.UseCase.RegisterUser(body)
-	if err != nil {
+	if err := h.usecase.RegisterUser(user); err != nil {
 		ctx.JSON(http.StatusConflict, gin.H{
 			"Success": false,
-			"Message": "Registering the User Failed",
-			"Error":   err,
+			"Message": "Registration failed",
+			"Error":   err.Error(),
 		})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{
 			"Success": true,
-			"Message": "Successfully sent the OTP",
+			"Message": "User registered successfully",
 		})
 	}
 }
 
 func (h *UserHandler) Login(ctx *gin.Context) {
 	user := domain.User{}
-	err := ctx.Bind(&user)
-	if err != nil {
-		utils.JsonInputValidation(ctx)
-		return
-	}
-
-	res, err := h.UseCase.UserLogin(user)
-	if err != nil {
+	if err := ctx.BindJSON(&user); err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"Success": false,
 			"Message": "Login credentials failed",
@@ -61,6 +53,17 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 		})
 		return
 	}
+
+	res, err := h.usecase.UserLogin(user)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"Success": false,
+			"Message": "Login credentials failed",
+			"err":     err.Error(),
+		})
+		return
+	}
+
 	accessToken, err := h.jwtUseCase.GenerateAccessToken(int(user.ID), user.Email, "user")
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
@@ -70,30 +73,65 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 		})
 		return
 	}
-
 	ctx.JSON(http.StatusOK, gin.H{
 		"Success":     true,
 		"Message":     "User successfully logged in",
-		"Accesstoken": accessToken,
 		"data":        res,
+		"Accesstoken": accessToken,
 	})
-
 }
 
+//fetching notes by user
 func (h *UserHandler) GetNotes(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.GetString("userId"))
-	res, err := h.UseCase.GetNotes(id)
+	id, err := strconv.Atoi(ctx.GetString("userId"))
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"Success": false,
 			"Message": "Login credentials failed",
 			"err":     err,
 		})
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{
-			"Success": true,
-			"Message": "User successfully logged in",
-			"data":    res,
-		})
+		return
 	}
+
+	res, err := h.usecase.GetNotes(id)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"Success": false,
+			"Message": "Login credentials failed",
+			"err":     err,
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"Success": true,
+		"Message": "User successfully logged in",
+		"data":    res,
+	})
+}
+
+//Creating notes by user
+func (h *UserHandler) CreateNote(ctx *gin.Context) {
+	notes := domain.Notes{}
+	if err := ctx.Bind(&notes); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"Success": false,
+			"Message": "Creating notes faild",
+			"err":     err,
+		})
+		return
+	}
+
+	if err := h.usecase.CreateNotes(notes); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"Success": false,
+			"Message": "Creating notes faild",
+			"err":     err,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"Success": true,
+		"Message": "User successfully logged in",
+	})
 }
