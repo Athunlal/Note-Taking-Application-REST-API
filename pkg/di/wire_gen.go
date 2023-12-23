@@ -24,7 +24,9 @@ func InitApi(cfg config.Config) (*api.ServerHttp, error) {
 	}
 	userRepo := repository.NewUserRepo(gormDB)
 	userUseCase := usecase.NewUserUseCase(userRepo)
-	userHandler := handler.NewUserHandler(userUseCase)
+	jwtHandler :=usecase.NewJWTUseCase(cfg)
+	userHandler := handler.NewUserHandler(userUseCase,jwtHandler)
 	serverHttp := api.NewServerHttp(userHandler)
+	api.Routes(serverHttp.Engine,userHandler)
 	return serverHttp, nil
 }
