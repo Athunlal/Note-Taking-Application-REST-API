@@ -11,9 +11,9 @@ type userDatabase struct {
 }
 
 // GetNotes implements interfaces.UserRepo.
-func (db *userDatabase) GetNotes(userId int) ([]domain.Notes, error) {
+func (db *userDatabase) GetNotes(sId string) ([]domain.Notes, error) {
 	var notes []domain.Notes
-	res := db.DB.Where("UserId = ?", userId).Find(&notes)
+	res := db.DB.Where("sid = ?", sId).Find(&notes)
 	if res.Error != nil {
 		return nil, res.Error
 	}
@@ -32,7 +32,8 @@ func (db *userDatabase) CreateNote(Notes domain.Notes) error {
 
 // CreateUser implements interfaces.UserRepo.
 func (db *userDatabase) CreateUser(userData *domain.User) error {
-	res := db.DB.Create(&userData)
+
+	res := db.DB.Create(userData)
 	if res.Error != nil {
 		return res.Error
 	}
@@ -55,21 +56,6 @@ func (db *userDatabase) FindUserByEmail(userData domain.User) (*domain.User, err
 		return nil, res.Error
 	}
 	return &userData, nil
-}
-
-// FindUserById implements interfaces.UserRepo.
-func (*userDatabase) FindUserById(userId int) (*domain.User, error) {
-	panic("unimplemented")
-}
-
-// GetNoteById implements interfaces.UserRepo.
-func (db *userDatabase) GetNoteById(Id string) (*domain.Notes, error) {
-	var notes domain.Notes
-	res := db.DB.Where("sid = ?", Id).First(&notes)
-	if res.Error != nil {
-		return nil, res.Error
-	}
-	return &notes, nil
 }
 
 func NewUserRepo(db *gorm.DB) interfaces.UserRepo {

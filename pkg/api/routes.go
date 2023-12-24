@@ -6,12 +6,15 @@ import (
 )
 
 func Routes(r *gin.Engine, userHandler *handler.UserHandler) {
+
 	user := r.Group("/user")
 	{
 		user.POST("/signup", userHandler.Register)
 		user.POST("/login", userHandler.Login)
 
-		user.POST("/note", userHandler.AuthRequired, userHandler.CreateNote)
-		user.GET("/note", userHandler.GetNotes)
+		user.POST("/note", userHandler.CreateNote)
+		user.GET("/note", userHandler.GetNote)
+		user.DELETE("/note", userHandler.DeleteNote)
+
 	}
 }
