@@ -2,6 +2,11 @@
 
 ## To Run this project 
 
+# To Run this project in one step
+```
+    make start
+```
+
 1. Install docker and docker-compose
 2. Clone this repository
 3. Navigate to the Directory
