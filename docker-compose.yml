@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    container_name: db
+    networks:
+      - notapp
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: athun123
+      POSTGRES_DB: notes
+    ports:
+      - "5421:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "db", "-p", "5432", "-U", "postgres", "-d", "notes"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  noteapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: noteapp
+    container_name: noteapp
+    networks:
+      - notapp
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://db:5432"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: athun123
+      DB_NAME: notes
+
+networks:
+  notapp:
+    driver: bridge
