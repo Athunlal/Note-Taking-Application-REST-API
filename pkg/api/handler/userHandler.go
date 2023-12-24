@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/athunlal/Note-Taking-Application/pkg/domain"
 	"github.com/athunlal/Note-Taking-Application/pkg/usecase/interfaces"
@@ -11,17 +10,16 @@ import (
 )
 
 type UserHandler struct {
-	usecase    interfaces.UserUseCase
-	jwtUseCase interfaces.JwtUseCase
+	usecase interfaces.UserUseCase
 }
 
-func NewUserHandler(useCase interfaces.UserUseCase, jwtUseCase interfaces.JwtUseCase) *UserHandler {
+func NewUserHandler(useCase interfaces.UserUseCase) *UserHandler {
 	return &UserHandler{
-		usecase:    useCase,
-		jwtUseCase: jwtUseCase,
+		usecase: useCase,
 	}
 }
 
+//user register
 func (h *UserHandler) Register(ctx *gin.Context) {
 	var user domain.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
@@ -43,14 +41,11 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 	}
 }
 
+//user login
 func (h *UserHandler) Login(ctx *gin.Context) {
 	user := domain.User{}
 	if err := ctx.BindJSON(&user); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"Success": false,
-			"Message": "Login credentials failed",
-			"err":     err,
-		})
+		utils.JsonInputValidation(ctx)
 		return
 	}
 
@@ -64,47 +59,42 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := h.jwtUseCase.GenerateAccessToken(int(user.ID), user.Email, "user")
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"Success": false,
-			"Message": "Login credentials failed",
-			"err":     err,
-		})
-		return
-	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"Success":     true,
-		"Message":     "User successfully logged in",
-		"data":        res,
-		"Accesstoken": accessToken,
+		"Success": true,
+		"Message": "User successfully logged in",
+		"data":    res,
 	})
 }
 
 //fetching notes by user
-func (h *UserHandler) GetNotes(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.GetString("userId"))
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"Success": false,
-			"Message": "Login credentials failed",
-			"err":     err,
-		})
+func (h *UserHandler) GetNote(ctx *gin.Context) {
+	note := domain.Notes{}
+	if err := ctx.BindJSON(&note); err != nil {
+		utils.JsonInputValidation(ctx)
 		return
 	}
 
-	res, err := h.usecase.GetNotes(id)
+	res, err := h.usecase.GetNotes(note.Sid)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"Success": false,
-			"Message": "Login credentials failed",
-			"err":     err,
-		})
+		if err.Error() == "Not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"Success": false,
+				"Message": "Fetching notes failed",
+				"err":     err.Error(),
+			})
+		} else {
+			ctx.JSON(http.StatusUnauthorized, gin.H{
+				"Success": false,
+				"Message": "Fetching notes failed",
+				"err":     err.Error(),
+			})
+		}
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"Success": true,
-		"Message": "User successfully logged in",
+		"Message": "Successfully Fetch notes",
 		"data":    res,
 	})
 }
@@ -113,25 +103,44 @@ func (h *UserHandler) GetNotes(ctx *gin.Context) {
 func (h *UserHandler) CreateNote(ctx *gin.Context) {
 	notes := domain.Notes{}
 	if err := ctx.Bind(&notes); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"Success": false,
-			"Message": "Creating notes faild",
-			"err":     err,
-		})
+		utils.JsonInputValidation(ctx)
 		return
 	}
 
 	if err := h.usecase.CreateNotes(notes); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"Success": false,
 			"Message": "Creating notes faild",
-			"err":     err,
+			"err":     err.Error(),
 		})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"Success": true,
-		"Message": "User successfully logged in",
+		"Message": "Successfully create note",
+	})
+}
+
+//Deleting not by note id
+func (h *UserHandler) DeleteNote(ctx *gin.Context) {
+	var note domain.Notes
+	if err := ctx.BindJSON(&note); err != nil {
+		utils.JsonInputValidation(ctx)
+		return
+	}
+
+	if err := h.usecase.DeleteNote(note); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"Success": false,
+			"Message": "Deleting notes faild",
+			"err":     err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"Success": true,
+		"Message": "Successfully delete note",
 	})
 }

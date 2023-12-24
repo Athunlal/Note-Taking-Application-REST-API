@@ -10,8 +10,6 @@ type User struct {
 }
 
 type Notes struct {
-	Sid        string `json:"sid"`
-	Note       string `json:"note"`
-	UserId     uint   `json:"userid"`
-	UserIdNots User   `gorm:"foreignkey:UserId"`
+	Sid  string `json:"sid"`
+	Note string `json:"note"`
 }

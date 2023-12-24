@@ -7,7 +7,6 @@ type UserUseCase interface {
 	UserLogin(user domain.User) (*domain.User, error)
 
 	CreateNotes(note domain.Notes) error
-	GetNote(notes domain.Notes) (*domain.Notes, error)
-	GetNotes(id int) ([]domain.Notes, error)
+	GetNotes(sid string) ([]domain.Notes, error)
 	DeleteNote(notes domain.Notes) error
 }

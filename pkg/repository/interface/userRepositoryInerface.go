@@ -8,7 +8,6 @@ type UserRepo interface {
 	FindUserByEmail(userData domain.User) (*domain.User, error)
 
 	CreateNote(Notes domain.Notes) error
-	GetNoteById(Id string) (*domain.Notes, error)
-	GetNotes(userId int) ([]domain.Notes, error)
+	GetNotes(sId string) ([]domain.Notes, error)
 	DeleteNoteById(Id string) error
 }
