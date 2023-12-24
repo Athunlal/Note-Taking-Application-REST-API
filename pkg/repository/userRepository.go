@@ -32,7 +32,8 @@ func (db *userDatabase) CreateNote(Notes domain.Notes) error {
 
 // CreateUser implements interfaces.UserRepo.
 func (db *userDatabase) CreateUser(userData *domain.User) error {
-	res := db.DB.Create(&userData)
+
+	res := db.DB.Create(userData)
 	if res.Error != nil {
 		return res.Error
 	}
@@ -55,11 +56,6 @@ func (db *userDatabase) FindUserByEmail(userData domain.User) (*domain.User, err
 		return nil, res.Error
 	}
 	return &userData, nil
-}
-
-// FindUserById implements interfaces.UserRepo.
-func (*userDatabase) FindUserById(userId int) (*domain.User, error) {
-	panic("unimplemented")
 }
 
 func NewUserRepo(db *gorm.DB) interfaces.UserRepo {

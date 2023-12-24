@@ -53,14 +53,14 @@ func (use *userUseCase) GetNotes(sId string) ([]domain.Notes, error) {
 // RegisterUser implements interfaces.UserUseCase.
 func (use *userUseCase) RegisterUser(user domain.User) error {
 	res, err := use.repo.FindUserByEmail(user)
-	if err == nil {
-		if res.Email != "" {
-			return errors.New("email address already exist")
-		}
-		err := use.repo.CreateUser(&user)
-		if err != nil {
+	if err != nil {
+		if err := use.repo.CreateUser(&user); err != nil {
 			return err
 		}
+		return nil
+	}
+	if res != nil && res.Email != "" {
+		return errors.New("user with the given email already exists")
 	}
 	return nil
 }
