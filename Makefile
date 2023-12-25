@@ -1,7 +1,6 @@
 .PHONY: start
 
 start:
-	git clone https://github.com/Athunlal/Note-Taking-Application-REST-API.git
 
 	sudo apt-get install -y docker.io
 
